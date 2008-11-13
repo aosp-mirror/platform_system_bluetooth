@@ -41,72 +41,8 @@
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
-#define USE_UGLY_POWER_INTERFACE 1
-#if USE_UGLY_POWER_INTERFACE
-
-#define BLUETOOTH_POWER_PATH "/sys/module/board_trout/parameters/bluetooth_power_on"
-
-static int set_bluetooth_power(int on) {
-    int ret = -1;
-    int sz;
-    const char buffer = (on ? 'Y' : 'N');
-    int fd = open(BLUETOOTH_POWER_PATH, O_WRONLY);
-
-    if (fd == -1) {
-        LOGE("Can't open %s for write: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    sz = write(fd, &buffer, 1);
-    if (sz != 1) {
-        LOGE("Can't write to %s: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    ret = 0;
-
-out:
-    if (fd >= 0) close(fd);
-    return ret;
-}
-
-static int check_bluetooth_power() {
-    int ret = -1;
-    int sz;
-    char buffer;
-    int fd = open(BLUETOOTH_POWER_PATH, O_RDONLY);
-
-    if (fd == -1) {
-        LOGE("Can't open %s for read: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    sz = read(fd, &buffer, 1);
-    if (sz != 1) {
-        LOGE("Can't read from %s: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-
-    switch (buffer) {
-    case 'Y':
-        ret = 1;
-        break;
-    case 'N':
-        ret = 0;
-        break;
-    }
-
-out:
-    if (fd >= 0) close(fd);
-    return ret;
-}
-
-#else
-
 static int rfkill_id = -1;
 static char *rfkill_state_path = NULL;
-
 
 static int init_rfkill() {
     char path[64];
@@ -198,7 +134,6 @@ out:
     if (fd >= 0) close(fd);
     return ret;
 }
-#endif
 
 static inline int create_hci_sock() {
     int sk = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
