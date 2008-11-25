@@ -12,6 +12,7 @@ LOCAL_SRC_FILES := \
 	bluetooth.c
 
 LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/include \
 	$(call include-path-for, bluez-libs)
 
 LOCAL_SHARED_LIBRARIES := \
