@@ -182,6 +182,11 @@ int bt_enable() {
         goto out;
     }
     sleep(HCID_START_DELAY_SEC);
+    LOGI("Starting pand deamon");
+    if (property_set("ctl.start", "pand") < 0) {
+        LOGE("Failed to start pand");
+        goto out;
+    }
 
     ret = 0;
 
@@ -196,6 +201,11 @@ int bt_disable() {
     int ret = -1;
     int hci_sock = -1;
 
+    LOGI("Stopping pand deamon");
+    if (property_set("ctl.stop", "pand") < 0) {
+        LOGE("Error stopping pand");
+        goto out;
+    }
     LOGI("Stopping hcid deamon");
     if (property_set("ctl.stop", "hcid") < 0) {
         LOGE("Error stopping hcid");
