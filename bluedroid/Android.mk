@@ -1,5 +1,3 @@
-ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-
 #
 # libbluedroid
 #
@@ -12,6 +10,7 @@ LOCAL_SRC_FILES := \
 	bluetooth.c
 
 LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/include \
 	$(call include-path-for, bluez-libs)
 
 LOCAL_SHARED_LIBRARIES := \
@@ -39,5 +38,3 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := bttest
 
 include $(BUILD_EXECUTABLE)
-
-endif

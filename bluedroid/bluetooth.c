@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Google Inc.
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,68 +41,6 @@
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
-#define USE_UGLY_POWER_INTERFACE 1
-#if USE_UGLY_POWER_INTERFACE
-
-#define BLUETOOTH_POWER_PATH "/sys/module/board_trout/parameters/bluetooth_power_on"
-
-static int set_bluetooth_power(int on) {
-    int ret = -1;
-    int sz;
-    const char buffer = (on ? 'Y' : 'N');
-    int fd = open(BLUETOOTH_POWER_PATH, O_WRONLY);
-
-    if (fd == -1) {
-        LOGE("Can't open %s for write: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    sz = write(fd, &buffer, 1);
-    if (sz != 1) {
-        LOGE("Can't write to %s: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    ret = 0;
-
-out:
-    if (fd >= 0) close(fd);
-    return ret;
-}
-
-static int check_bluetooth_power() {
-    int ret = -1;
-    int sz;
-    char buffer;
-    int fd = open(BLUETOOTH_POWER_PATH, O_RDONLY);
-
-    if (fd == -1) {
-        LOGE("Can't open %s for read: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-    sz = read(fd, &buffer, 1);
-    if (sz != 1) {
-        LOGE("Can't read from %s: %s (%d)", BLUETOOTH_POWER_PATH,
-             strerror(errno), errno);
-        goto out;
-    }
-
-    switch (buffer) {
-    case 'Y':
-        ret = 1;
-        break;
-    case 'N':
-        ret = 0;
-        break;
-    }
-
-out:
-    if (fd >= 0) close(fd);
-    return ret;
-}
-
-#else
 
 static int rfkill_id = -1;
 static char *rfkill_state_path = NULL;
@@ -198,7 +136,6 @@ out:
     if (fd >= 0) close(fd);
     return ret;
 }
-#endif
 
 static inline int create_hci_sock() {
     int sk = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
@@ -207,6 +144,17 @@ static inline int create_hci_sock() {
              strerror(errno), errno);
     }
     return sk;
+}
+
+/* TODO: Remove this once legacy hciattach is removed */
+static const char * get_hciattach_script() {
+    if (access("/dev/ttyHS0", F_OK)) {
+        LOGD("Using legacy uart driver (115200 bps)");
+        return "hciattach_legacy";
+    } else {
+        LOGD("Using high speed uart driver (4 Mbps)");
+        return "hciattach";
+    }
 }
 
 int bt_enable() {
@@ -219,7 +167,7 @@ int bt_enable() {
     if (set_bluetooth_power(1) < 0) goto out;
 
     LOGI("Starting hciattach daemon");
-    if (property_set("ctl.start", "hciattach") < 0) {
+    if (property_set("ctl.start", get_hciattach_script()) < 0) {
         LOGE("Failed to start hciattach");
         goto out;
     }
@@ -273,7 +221,7 @@ int bt_disable() {
     ioctl(hci_sock, HCIDEVDOWN, HCI_DEV_ID);
 
     LOGI("Stopping hciattach deamon");
-    if (property_set("ctl.stop", "hciattach") < 0) {
+    if (property_set("ctl.stop", get_hciattach_script()) < 0) {
         LOGE("Error stopping hciattach");
         goto out;
     }
