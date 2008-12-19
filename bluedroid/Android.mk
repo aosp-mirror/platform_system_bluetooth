@@ -1,5 +1,3 @@
-ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-
 #
 # libbluedroid
 #
@@ -40,5 +38,3 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := bttest
 
 include $(BUILD_EXECUTABLE)
-
-endif

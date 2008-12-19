@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Google Inc.
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,17 @@ static inline int create_hci_sock() {
     return sk;
 }
 
+/* TODO: Remove this once legacy hciattach is removed */
+static const char * get_hciattach_script() {
+    if (access("/dev/ttyHS0", F_OK)) {
+        LOGD("Using legacy uart driver (115200 bps)");
+        return "hciattach_legacy";
+    } else {
+        LOGD("Using high speed uart driver (4 Mbps)");
+        return "hciattach";
+    }
+}
+
 int bt_enable() {
     LOGV(__FUNCTION__);
 
@@ -154,7 +165,7 @@ int bt_enable() {
     if (set_bluetooth_power(1) < 0) goto out;
 
     LOGI("Starting hciattach daemon");
-    if (property_set("ctl.start", "hciattach") < 0) {
+    if (property_set("ctl.start", get_hciattach_script()) < 0) {
         LOGE("Failed to start hciattach");
         goto out;
     }
@@ -208,7 +219,7 @@ int bt_disable() {
     ioctl(hci_sock, HCIDEVDOWN, HCI_DEV_ID);
 
     LOGI("Stopping hciattach deamon");
-    if (property_set("ctl.stop", "hciattach") < 0) {
+    if (property_set("ctl.stop", get_hciattach_script()) < 0) {
         LOGE("Error stopping hciattach");
         goto out;
     }
