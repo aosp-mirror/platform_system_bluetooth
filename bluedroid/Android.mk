@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/include \
-	$(call include-path-for, bluez-libs)
+	system/bluetooth/bluez-clean-headers
 
 LOCAL_SHARED_LIBRARIES := \
 	libcutils
