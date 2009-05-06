@@ -178,9 +178,9 @@ int bt_enable() {
         goto out;
     }
 
-    LOGI("Starting hcid deamon");
-    if (property_set("ctl.start", "hcid") < 0) {
-        LOGE("Failed to start hcid");
+    LOGI("Starting bluetoothd deamon");
+    if (property_set("ctl.start", "bluetoothd") < 0) {
+        LOGE("Failed to start bluetoothd");
         goto out;
     }
     sleep(HCID_START_DELAY_SEC);
@@ -198,9 +198,9 @@ int bt_disable() {
     int ret = -1;
     int hci_sock = -1;
 
-    LOGI("Stopping hcid deamon");
-    if (property_set("ctl.stop", "hcid") < 0) {
-        LOGE("Error stopping hcid");
+    LOGI("Stopping bluetoothd deamon");
+    if (property_set("ctl.stop", "bluetoothd") < 0) {
+        LOGE("Error stopping bluetoothd");
         goto out;
     }
     usleep(HCID_STOP_DELAY_USEC);
