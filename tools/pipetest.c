@@ -168,6 +168,7 @@ static int do_pollin_pollin_write() {
 }
 
 static int do_poll_poll_shutdown() {
+#if 0
     pthread_t t1;
     pthread_t t2;
     int fd[2];
@@ -183,7 +184,9 @@ static int do_poll_poll_shutdown() {
 
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
+#endif
 
+    return -1;
 }
 
 static int THREADS = 100;
