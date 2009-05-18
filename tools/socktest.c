@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 
@@ -62,6 +63,22 @@ struct sockaddr_rc  remote_addr_rc  ;
 struct sockaddr_sco remote_addr_sco ;
 struct sockaddr_l2  remote_addr_l2  ;
 struct sockaddr_in  remote_addr_in  ;
+
+static void print_events(int events) {
+    if (events & POLLIN) printf("POLLIN ");
+    if (events & POLLPRI) printf("POLLPRI ");
+    if (events & POLLOUT) printf("POLLOUT ");
+    if (events & POLLERR) printf("POLLERR ");
+    if (events & POLLHUP) printf("POLLHUP ");
+    if (events & POLLNVAL) printf("POLLNVAL ");
+    printf("\n");
+}
+
+static void print_fds(struct pollfd *ufds, nfds_t nfds) {
+    unsigned int i;
+    for (i=0; i<nfds; i++)
+        printf("%d ", ufds[i].fd);
+}
 
 static int _socket(int type) {
     int ret;
@@ -164,6 +181,19 @@ static int _listen(int fd, int type) {
     return ret;
 }
 
+static int _read(int fd) {
+    int ret;
+    char buf;
+
+    printf("%d: read(%d)\n", gettid(), fd);
+    ret = read(fd, &buf, 1);
+    printf("%d: read(%d) = %d [%d]\n", gettid(), fd, ret, (int)buf);
+    if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
+
+    return ret;
+}
+
+
 static int _accept(int fd, int type) {
     int ret;
     int len;
@@ -241,13 +271,44 @@ static int _connect(int fd, int type) {
 
 static int _write(int fd, int type) {
     int ret;
-    char buf = 0;
+    char buf = 69;
 
     printf("%d: write(%d)\n", gettid(), fd);
     ret = write(fd, &buf, 1);
-    printf("%d: connect(%d) = %d\n", gettid(), fd, ret);
+    printf("%d: write(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
+    return ret;
+}
+
+static int _shutdown(int fd, int how) {
+    int ret;
+
+    printf("%d: shutdown(%d)\n", gettid(), fd);
+    ret = shutdown(fd, how);
+    printf("%d: shutdown(%d) = %d\n", gettid(), fd, ret);
+    if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
+
+    return ret;
+}
+
+static int _poll(struct pollfd *ufds, nfds_t nfds, int timeout) {
+    int ret;
+    unsigned int i;
+
+    printf("%d: poll(", gettid());
+    print_fds(ufds, nfds);
+    printf(")\n");
+    ret = poll(ufds, nfds, timeout);
+    printf("%d: poll() = %d\n", gettid(), ret);
+    if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
+    if (ret > 0) {
+        for (i=0; i<nfds; i++) {
+            if (ufds[i].revents) {
+                printf("\tfd %d ", ufds[i].fd); print_events(ufds[i].revents);
+            }
+        }
+    }
     return ret;
 }
 
@@ -258,10 +319,67 @@ static void thread_delay_close(struct thread_args *args) {
     printf("%d: END\n", gettid());
 }
 
+static void thread_poll(void *args) {
+    int fd = (int)args;
+    struct pollfd pfd;
+    printf("%d: START\n", gettid());
+    pfd.fd = fd;
+    pfd.events = 0;
+    _poll(&pfd, 1, -1);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_read(void *args) {
+    int fd = (int)args;
+    printf("%d: START\n", gettid());
+    _read(fd);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_pollin(void *args) {
+    int fd = (int)args;
+    struct pollfd pfd;
+    printf("%d: START\n", gettid());
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+    _poll(&pfd, 1, -1);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_shutdown(int fd) {
+    printf("%d: START\n", gettid());
+    sleep(4);
+    _shutdown(fd, SHUT_RDWR);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_accept(struct thread_args *args) {
+    printf("%d: START\n", gettid());
+    sleep(args->delay);
+    _accept(args->fd, args->type);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_connect(struct thread_args *args) {
+    printf("%d: START\n", gettid());
+    sleep(args->delay);
+    _connect(args->fd, args->type);
+    printf("%d: END\n", gettid());
+}
+
 static void thread_delay_close_write(struct thread_args *args) {
     printf("%d: START\n", gettid());
     sleep(args->delay);
     _close(args->fd, args->type);
+    sleep(args->delay);
+    _write(args->fd, args->type);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_accept_write(struct thread_args *args) {
+    printf("%d: START\n", gettid());
+    sleep(args->delay);
+    _accept(args->fd, args->type);
     sleep(args->delay);
     _write(args->fd, args->type);
     printf("%d: END\n", gettid());
@@ -320,6 +438,58 @@ error:
     return -1;
 }
 
+static int do_accept_shutdown(int type) {
+    int fd;
+    pthread_t thread;
+    struct thread_args args = {-1, type, 0};
+
+    fd = _socket(type);
+    if (fd < 0) goto error;
+
+    if (_bind(fd, type) < 0) goto error;
+
+    if (_listen(fd, type) < 0) goto error;
+
+    args.fd = fd;
+    pthread_create(&thread, NULL, (void *)thread_accept, (void *)&args);
+
+    sleep(4);
+    _shutdown(fd, SHUT_RDWR);
+
+    pthread_join(thread, NULL);
+
+    _close(fd, type);
+
+    return 0;
+
+error:
+    return -1;
+}
+
+static int do_connect_shutdown(int type) {
+    int fd;
+    pthread_t thread;
+    struct thread_args args = {-1, type, 0};
+
+    fd = _socket(type);
+    if (fd < 0) goto error;
+
+    args.fd = fd;
+    pthread_create(&thread, NULL, (void *)thread_connect, (void *)&args);
+
+    sleep(4);
+    _shutdown(fd, SHUT_RDWR);
+
+    pthread_join(thread, NULL);
+
+    _close(fd, type);
+
+    return 0;
+
+error:
+    return -1;
+}
+
 // accept in one thread. close then write in another
 static int do_accept_close_write(int type) {
     int fd;
@@ -346,25 +516,125 @@ error:
     return -1;
 }
 
-static int do_poll_poll_shutdown(int type) {
-#if 0
+static int do_poll_poll_poll_shutdown(int type) {
+    const int MAX_T = 32;
     int fd;
-    struct thread_args a1 = {-1, type, 1};
-    struct thread_args a2 = {-1, type, 2};
+    pthread_t t[MAX_T];
+    int i;
 
     fd = _socket(type);
 
-    pthread_create(&t1, NULL, (void *)thread_poll, (void *)fd[0]);
-    pthread_create(&t2, NULL, (void *)thread_poll, (void *)fd[0]);
+    for (i=0; i<MAX_T; i++)
+        pthread_create(&t[i], NULL, (void *)thread_poll, (void *)fd);
 
     sleep(1);
 
-    _shutdown(fd[1], SHUT_RDWR);
+    _shutdown(fd, SHUT_RDWR);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_join(t[i], NULL);
+
+    _close(fd, type);
+
+    return 0;
+}
+
+static int do_poll_poll_poll_close(int type) {
+    const int MAX_T = 32;
+    int fd;
+    pthread_t t[MAX_T];
+    int i;
+
+    fd = _socket(type);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_create(&t[i], NULL, (void *)thread_poll, (void *)fd);
+
+    sleep(1);
+
+    _close(fd, type);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_join(t[i], NULL);
+
+    return 0;
+}
+
+static int do_read_read_read_close(int type) {
+    const int MAX_T = 32;
+    int fd;
+    pthread_t t[MAX_T];
+    int i;
+
+    fd = _socket(type);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_create(&t[i], NULL, (void *)thread_read, (void *)fd);
+
+    sleep(1);
+
+    _close(fd, type);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_join(t[i], NULL);
+
+    return 0;
+}
+
+static int do_read_read_read_shutdown(int type) {
+    const int MAX_T = 32;
+    int fd;
+    pthread_t t[MAX_T];
+    int i;
+
+    fd = _socket(type);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_create(&t[i], NULL, (void *)thread_read, (void *)fd);
+
+    sleep(1);
+
+    _shutdown(fd, SHUT_RDWR);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_join(t[i], NULL);
+
+    _close(fd, type);
+
+    return 0;
+}
+
+static int do_connected_read1_shutdown1(int type) {
+    int fd1, fd2;
+    pthread_t t1;
+    pthread_t t2;
+    struct thread_args a1 = {-1, type, 0};
+    struct thread_args a2 = {-1, type, 2};
+
+    fd1 = _socket(type);
+    if (fd1 < 0) goto error;
+
+    if (_bind(fd1, type) < 0) goto error;
+
+    if (_listen(fd1, type) < 0) goto error;
+
+    a1.fd = fd1;
+    pthread_create(&t1, NULL, (void *)thread_accept_write, (void *)&a1);
+
+    fd2 = _socket(type);
+    if (_connect(fd2, type)) goto error;
+
+    pthread_create(&t2, NULL, (void *)thread_shutdown, (void *)&fd2);
+    
+    while (1) if (_read(fd2)) break;
 
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
-#endif
+
     return 0;
+
+error:
+    return -1;
 }
 
 // accept in one thread, connect from two different threads
@@ -402,8 +672,15 @@ struct {
 } action_table[]  = {
     {"accept_accept_accept", do_accept_accept_accept},
     {"accept_and_close", do_accept_and_close},
+    {"accept_shutdown", do_accept_shutdown},
+    {"connect_shutdown", do_connect_shutdown},
     {"accept_close_write", do_accept_close_write},
     {"accept_connect_connect", do_accept_connect_connect},
+    {"poll_poll_poll_shutdown", do_poll_poll_poll_shutdown},
+    {"poll_poll_poll_close", do_poll_poll_poll_close},
+    {"read_read_read_shutdown", do_read_read_read_shutdown},
+    {"read_read_read_close", do_read_read_read_close},
+    {"connected_read1_shutdown1", do_connected_read1_shutdown1},
     {NULL, NULL},
 };
 

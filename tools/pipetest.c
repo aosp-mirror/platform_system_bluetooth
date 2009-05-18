@@ -34,6 +34,15 @@ static void print_events(int events) {
     printf("\n");
 }
 
+static int _socketpair(int fd[2]) {
+    int ret;
+    printf("%d: socketpair()\n", gettid());
+    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fd);
+    printf("%d: socketpair() = %d\n", gettid(), ret);
+    if (ret) printf("\terr %d (%s)\n", errno, strerror(errno));
+    return ret;
+}   
+
 static int _close(int fd) {
     int ret;
     printf("%d: close(%d)\n", gettid(), fd);
@@ -71,6 +80,18 @@ static int _write(int fd, char *buf, int len) {
     return ret;
 }
 
+static int _read(int fd) {
+    int ret;
+    char buf;
+
+    printf("%d: read(%d)\n", gettid(), fd);
+    ret = read(fd, &buf, 1);
+    printf("%d: read(%d) = %d [%d]\n", gettid(), fd, ret, (int)buf);
+    if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
+
+    return ret;
+}
+
 static int _shutdown(int fd, int how) {
     int ret;
 
@@ -101,6 +122,25 @@ static void thread_pollin(void *args) {
     printf("%d: END\n", gettid());
 }
 
+static void thread_pollin_rand_delay(void *args) {
+    int fd = (int)args;
+    struct pollfd pfd;
+    int delay = (int)((double)random() * (10000000.0 / 2147483647.0));
+    printf("%d: START (delay = %d)\n", gettid(), delay);
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+    usleep(delay);
+    _poll(&pfd, 1, -1);
+    printf("%d: END\n", gettid());
+}
+
+static void thread_read(void *args) {
+    int fd = (int)args;
+    printf("%d: START\n", gettid());
+    _read(fd);
+    printf("%d: END\n", gettid());
+}
+
 static void thread_close(void *args) {
     int fd = (int)args;
     printf("%d: START\n", gettid());
@@ -124,6 +164,86 @@ static int do_poll_poll_close() {
 
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
+
+    return 0;
+}
+
+static int do_socketpair_poll1_shutdown2() {
+    int fd[2];
+    pthread_t t;
+
+    if (_socketpair(fd)) return -1;
+
+    pthread_create(&t, NULL, (void *)thread_poll, (void *)fd[1]);
+
+    sleep(1);
+
+    _shutdown(fd[0], SHUT_RDWR);    
+
+    sleep(1);
+
+    _close(fd[0]);
+
+    pthread_join(t, NULL);
+
+    return 0;
+}
+
+static int do_socketpair_poll1_shutdown1() {
+    int fd[2];
+    pthread_t t;
+
+    if (_socketpair(fd)) return -1;
+
+    pthread_create(&t, NULL, (void *)thread_poll, (void *)fd[0]);
+
+    sleep(1);
+
+    _shutdown(fd[0], SHUT_RDWR);    
+
+    sleep(1);
+
+    _close(fd[0]);
+
+    pthread_join(t, NULL);
+
+    return 0;
+}
+
+static int do_socketpair_poll1_close1() {
+    int fd[2];
+    pthread_t t;
+
+    if (_socketpair(fd)) return -1;
+
+    pthread_create(&t, NULL, (void *)thread_poll, (void *)fd[0]);
+
+    sleep(1);
+
+    _close(fd[0]);
+
+    pthread_join(t, NULL);
+
+    return 0;
+}
+
+static int do_socketpair_read1_shutdown1() {
+    int fd[2];
+    pthread_t t;
+
+    if (_socketpair(fd)) return -1;
+
+    pthread_create(&t, NULL, (void *)thread_read, (void *)fd[0]);
+
+    sleep(1);
+
+    _shutdown(fd[0], SHUT_RDWR);    
+
+    sleep(1);
+
+    _close(fd[0]);
+
+    pthread_join(t, NULL);
 
     return 0;
 }
@@ -163,6 +283,31 @@ static int do_pollin_pollin_write() {
 
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
+
+    return 0;
+}
+
+static int do_pollin_pollin_pollin_write_pollin_pollin_pollin() {
+    const int MAX_T = 10;
+    pthread_t t[MAX_T];
+    int fd[2];
+    char buf = 'a';
+    int i;
+
+    if (pipe(fd)) return -1;
+
+    for (i=0; i<MAX_T; i++)
+        pthread_create(&t[i], NULL, (void *)thread_pollin_rand_delay, (void *)fd[0]);
+
+    sleep(5);
+
+    _write(fd[1], &buf, 1);
+
+    for (i=0; i<MAX_T; i++)
+        pthread_join(t[i], NULL);
+
+    _close(fd[0]);
+    _close(fd[1]);
 
     return 0;
 }
@@ -242,9 +387,14 @@ struct {
     char *name;
     int (*ptr)();
 } function_table[]  = {
+    {"socketpair_poll1_shutdown2", do_socketpair_poll1_shutdown2},
+    {"socketpair_poll1_shutdown1", do_socketpair_poll1_shutdown1},
+    {"socketpair_poll1_close1", do_socketpair_poll1_close1},
+    {"socketpair_read1_shutdown1", do_socketpair_read1_shutdown1},
     {"pipe_pipe_pipe", do_pipe_pipe_pipe},
     {"poll_poll_close", do_poll_poll_close},
     {"pollin_pollin_write", do_pollin_pollin_write},
+    {"pollin_pollin_pollin_write_pollin_pollin_pollin", do_pollin_pollin_pollin_write_pollin_pollin_pollin},
     {"poll_poll_shutdown", do_poll_poll_shutdown},
     {"close_poll_poll_poll", do_close_poll_poll_poll},
     {"close_close_close", do_close_close_close},

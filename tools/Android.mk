@@ -18,6 +18,10 @@ LOCAL_MODULE := bttest
 
 include $(BUILD_EXECUTABLE)
 
+BUILD_EXTRA_BT_TOOLS:=false
+
+ifeq ($(BUILD_EXTRA_BT_TOOLS),true)
+
 #
 # socktest
 #
@@ -39,6 +43,23 @@ LOCAL_MODULE := socktest
 include $(BUILD_EXECUTABLE)
 
 #
+# sock_shutdown_test
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := sock_shutdown_test.c
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../bluez-clean-headers
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := sock_shutdown_test
+
+include $(BUILD_EXECUTABLE)
+
+#
 # pipetest
 #
 
@@ -51,3 +72,5 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := pipetest
 
 include $(BUILD_EXECUTABLE)
+
+endif
