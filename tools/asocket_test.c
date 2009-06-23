@@ -22,7 +22,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +37,8 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/sco.h>
 #include <bluetooth/l2cap.h>
+
+#include "cutils/abort_socket.h"
 
 enum sock_type {
     UNIX = 0,
@@ -115,9 +116,9 @@ static int _socket(int type) {
         break;
     }
 
-    printf("%ld: socket()\n", pthread_self());
+    printf("%d: socket()\n", gettid());
     ret = socket(family, typ, protocol);
-    printf("%ld: socket() = %d\n", pthread_self(), ret);
+    printf("%d: socket() = %d\n", gettid(), ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -126,9 +127,9 @@ static int _socket(int type) {
 static int _close(int fd, int type) {
     int ret;
 
-    printf("%ld: close(%d)\n", pthread_self(), fd);
+    printf("%d: close(%d)\n", gettid(), fd);
     ret = close(fd);
-    printf("%ld: close(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: close(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -163,9 +164,9 @@ static int _bind(int fd, int type) {
         break;
     }
 
-    printf("%ld: bind(%d)\n", pthread_self(), fd);
+    printf("%d: bind(%d)\n", gettid(), fd);
     ret = bind(fd, addr, len);
-    printf("%ld: bind(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: bind(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -174,9 +175,9 @@ static int _bind(int fd, int type) {
 static int _listen(int fd, int type) {
     int ret;
 
-    printf("%ld: listen(%d)\n", pthread_self(), fd);
+    printf("%d: listen(%d)\n", gettid(), fd);
     ret = listen(fd, 1);
-    printf("%ld: listen(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: listen(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -186,9 +187,9 @@ static int _read(int fd) {
     int ret;
     char buf;
 
-    printf("%ld: read(%d)\n", pthread_self(), fd);
+    printf("%d: read(%d)\n", gettid(), fd);
     ret = read(fd, &buf, 1);
-    printf("%ld: read(%d) = %d [%d]\n", pthread_self(), fd, ret, (int)buf);
+    printf("%d: read(%d) = %d [%d]\n", gettid(), fd, ret, (int)buf);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -223,29 +224,15 @@ static int _accept(int fd, int type) {
         break;
     }
 
-    printf("%ld: accept(%d)\n", pthread_self(), fd);
+    printf("%d: accept(%d)\n", gettid(), fd);
     ret = accept(fd, addr, &len);
-    printf("%ld: accept(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: accept(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
     else {
         printf("\tlen = %d\n", len);
     }
 
     return ret;
-}
-
-int get_bdaddr(const char *str, bdaddr_t *ba) {
-    char *d = ((char *)ba) + 5, *endp;
-    int i;
-    for(i = 0; i < 6; i++) {
-        *d-- = strtol(str, &endp, 16);
-        if (*endp != ':' && i != 5) {
-            memset(ba, 0, sizeof(bdaddr_t));
-            return -1;
-        }
-        str = endp + 1;
-    }
-    return 0;
 }
 
 static int _connect(int fd, int type) {
@@ -259,7 +246,6 @@ static int _connect(int fd, int type) {
         len = sizeof(local_addr_un);
         break;
     case RFCOMM:
-        get_bdaddr("00:11:22:33:44:55", &local_addr_rc.rc_bdaddr);
         addr = (struct sockaddr *) &local_addr_rc;
         len = sizeof(local_addr_rc);
         break;
@@ -277,9 +263,9 @@ static int _connect(int fd, int type) {
         break;
     }
 
-    printf("%ld: connect(%d)\n", pthread_self(), fd);
+    printf("%d: connect(%d)\n", gettid(), fd);
     ret = connect(fd, addr, len);
-    printf("%ld: connect(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: connect(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -289,9 +275,9 @@ static int _write(int fd, int type) {
     int ret;
     char buf = 69;
 
-    printf("%ld: write(%d)\n", pthread_self(), fd);
+    printf("%d: write(%d)\n", gettid(), fd);
     ret = write(fd, &buf, 1);
-    printf("%ld: write(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: write(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -300,9 +286,9 @@ static int _write(int fd, int type) {
 static int _shutdown(int fd, int how) {
     int ret;
 
-    printf("%ld: shutdown(%d)\n", pthread_self(), fd);
+    printf("%d: shutdown(%d)\n", gettid(), fd);
     ret = shutdown(fd, how);
-    printf("%ld: shutdown(%d) = %d\n", pthread_self(), fd, ret);
+    printf("%d: shutdown(%d) = %d\n", gettid(), fd, ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
 
     return ret;
@@ -312,11 +298,11 @@ static int _poll(struct pollfd *ufds, nfds_t nfds, int timeout) {
     int ret;
     unsigned int i;
 
-    printf("%ld: poll(", pthread_self());
+    printf("%d: poll(", gettid());
     print_fds(ufds, nfds);
     printf(")\n");
     ret = poll(ufds, nfds, timeout);
-    printf("%ld: poll() = %d\n", pthread_self(), ret);
+    printf("%d: poll() = %d\n", gettid(), ret);
     if (ret < 0) printf("\terr %d (%s)\n", errno, strerror(errno));
     if (ret > 0) {
         for (i=0; i<nfds; i++) {
@@ -329,84 +315,84 @@ static int _poll(struct pollfd *ufds, nfds_t nfds, int timeout) {
 }
 
 static void thread_delay_close(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     _close(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_poll(void *args) {
     int fd = (int)args;
     struct pollfd pfd;
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     pfd.fd = fd;
     pfd.events = 0;
     _poll(&pfd, 1, -1);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_read(void *args) {
     int fd = (int)args;
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     _read(fd);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_pollin(void *args) {
     int fd = (int)args;
     struct pollfd pfd;
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     pfd.fd = fd;
     pfd.events = POLLIN;
     _poll(&pfd, 1, -1);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_shutdown(int fd) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(4);
     _shutdown(fd, SHUT_RDWR);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_accept(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     _accept(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_connect(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     _connect(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_delay_close_write(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     _close(args->fd, args->type);
     sleep(args->delay);
     _write(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_accept_write(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     _accept(args->fd, args->type);
     sleep(args->delay);
     _write(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static void thread_delay_connect(struct thread_args *args) {
-    printf("%ld: START\n", pthread_self());
+    printf("%d: START\n", gettid());
     sleep(args->delay);
     args->fd = _socket(args->type);
     _connect(args->fd, args->type);
-    printf("%ld: END\n", pthread_self());
+    printf("%d: END\n", gettid());
 }
 
 static int do_accept_accept_accept(int type) {
@@ -497,64 +483,6 @@ static int do_connect_shutdown(int type) {
     _shutdown(fd, SHUT_RDWR);
 
     pthread_join(thread, NULL);
-
-    _close(fd, type);
-
-    return 0;
-
-error:
-    return -1;
-}
-
-static int do_connectnb_shutdown(int type) {
-    int fd;
-    int flags;
-    pthread_t thread;
-    struct thread_args args = {-1, type, 0};
-
-
-    fd = _socket(type);
-    if (fd < 0) goto error;
-
-    flags = fcntl(fd, F_GETFL);
-    if (flags == -1)
-        return -1;
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK))
-        return -1;
-
-    _connect(fd, type);
-
-    sleep(1);
-    _shutdown(fd, SHUT_RDWR);
-
-    sleep(2);
-
-    _close(fd, type);
-
-    return 0;
-
-error:
-    return -1;
-}
-
-static int do_connectnb_close(int type) {
-    int fd;
-    pthread_t thread;
-    struct thread_args args = {-1, type, 0};
-    int flags;
-
-    fd = _socket(type);
-    if (fd < 0) goto error;
-
-    flags = fcntl(fd, F_GETFL);
-    if (flags == -1)
-        return -1;
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK))
-        return -1;
-
-    _connect(fd, type);
-
-    sleep(2);
 
     _close(fd, type);
 
@@ -748,8 +676,6 @@ struct {
     {"accept_and_close", do_accept_and_close},
     {"accept_shutdown", do_accept_shutdown},
     {"connect_shutdown", do_connect_shutdown},
-    {"connectnb_shutdown", do_connectnb_shutdown},
-    {"connectnb_close", do_connectnb_close},
     {"accept_close_write", do_accept_close_write},
     {"accept_connect_connect", do_accept_connect_connect},
     {"poll_poll_poll_shutdown", do_poll_poll_poll_shutdown},

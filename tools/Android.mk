@@ -1,3 +1,5 @@
+BUILD_EXTRA_BT_TOOLS:=false
+
 LOCAL_PATH:= $(call my-dir)
 
 #
@@ -18,8 +20,6 @@ LOCAL_MODULE := bttest
 
 include $(BUILD_EXECUTABLE)
 
-BUILD_EXTRA_BT_TOOLS:=false
-
 ifeq ($(BUILD_EXTRA_BT_TOOLS),true)
 
 #
@@ -39,6 +39,25 @@ LOCAL_SHARED_LIBRARIES := libbluedroid
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := socktest
+
+include $(BUILD_EXECUTABLE)
+
+#
+# asocket_test
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := asocket_test.c
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../bluez-clean-headers
+
+LOCAL_SHARED_LIBRARIES := libcutils
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := asocket_test
 
 include $(BUILD_EXECUTABLE)
 
