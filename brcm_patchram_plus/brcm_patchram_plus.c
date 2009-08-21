@@ -101,8 +101,8 @@ unsigned char hci_reset[] = { 0x01, 0x03, 0x0c, 0x00 };
 
 unsigned char hci_download_minidriver[] = { 0x01, 0x2e, 0xfc, 0x00 };
 
-unsigned char hci_update_baud_rate[] = { 0x01, 0x18, 0xfc, 0x02, 0x00, 0x00,
-	0x00 };
+unsigned char hci_update_baud_rate[] = { 0x01, 0x18, 0xfc, 0x06, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00 };
 
 unsigned char hci_write_bd_addr[] = { 0x01, 0x01, 0xfc, 0x06, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -137,36 +137,18 @@ parse_patchram(char *optarg)
 	return(0);
 }
 
-// Based on what is supplied to the UART
-#define CRYSTAL_FREQ 24000000
-
 void 
 BRCM_encode_baud_rate(uint baud_rate, unsigned char *encoded_baud)
 {
-    uint encoded_segment = 0;
-    unsigned char encoded_baud_rate = 0;
- 
-    if(baud_rate == 0 || encoded_baud == NULL)
-    {
-      fprintf(stderr, "Baudrate not supported!");
-      return; 
-    }
- 
-    //Upper four bits
-    encoded_segment = (((CRYSTAL_FREQ / baud_rate) % 16) / 2);
-    encoded_baud_rate = ((unsigned char)encoded_segment) << 4;
- 
-    // Lower four bits of high nibble
-    encoded_segment  = ((((CRYSTAL_FREQ / baud_rate) % 16) / 2) +
-                        (((CRYSTAL_FREQ / baud_rate) % 16) % 2));
-    encoded_baud_rate |= (unsigned char)encoded_segment;
- 
-    *encoded_baud = encoded_baud_rate;
-    
-    // Lower byte
-    encoded_segment = ( 256 - ((CRYSTAL_FREQ / baud_rate) / 16) );
- 
-    *(encoded_baud+1) = (unsigned char)encoded_segment;
+	if(baud_rate == 0 || encoded_baud == NULL) {
+		fprintf(stderr, "Baudrate not supported!");
+		return; 
+	}
+
+	encoded_baud[3] = (unsigned char)(baud_rate >> 24);
+	encoded_baud[2] = (unsigned char)(baud_rate >> 16);
+	encoded_baud[1] = (unsigned char)(baud_rate >> 8);
+	encoded_baud[0] = (unsigned char)(baud_rate & 0xFF);
 }
 
 typedef struct {
@@ -214,7 +196,7 @@ parse_baudrate(char *optarg)
 	int baudrate = atoi(optarg);
 
 	if (validate_baudrate(baudrate, &termios_baudrate)) {
-		BRCM_encode_baud_rate(baudrate, &hci_update_baud_rate[4]);
+		BRCM_encode_baud_rate(baudrate, &hci_update_baud_rate[6]);
 	}
 
 	return(0);
@@ -474,6 +456,10 @@ proc_baudrate()
 	cfsetospeed(&termios, termios_baudrate);
 	cfsetispeed(&termios, termios_baudrate);
 	tcsetattr(uart_fd, TCSANOW, &termios);
+
+	if (debug) {
+		fprintf(stderr, "Done setting baudrate\n");
+	}
 }
 
 void
