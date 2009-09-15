@@ -79,6 +79,59 @@ LOCAL_MODULE := sock_shutdown_test
 include $(BUILD_EXECUTABLE)
 
 #
+# sock_shutdown_bug_l2cap
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := sock_shutdown_bug_l2cap.c
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../bluez-clean-headers
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := sock_shutdown_bug_l2cap
+
+LOCAL_SHARED_LIBRARIES := libbluetooth
+
+include $(BUILD_EXECUTABLE)
+
+#
+# sock_shutdown_bug_rfcomm
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := sock_shutdown_bug_rfcomm.c
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../bluez-clean-headers
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := sock_shutdown_bug_rfcomm
+
+LOCAL_SHARED_LIBRARIES := libbluetooth
+
+include $(BUILD_EXECUTABLE)
+
+#
+# sock_shutdown_bug_tcp
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := sock_shutdown_bug_tcp.c
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := sock_shutdown_bug_tcp
+
+LOCAL_SHARED_LIBRARIES := libbluetooth
+
+include $(BUILD_EXECUTABLE)
+#
 # pipetest
 #
 
