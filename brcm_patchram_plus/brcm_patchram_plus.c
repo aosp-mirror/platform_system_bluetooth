@@ -45,8 +45,11 @@
 **                 For Android, this program invoked using a 
 **                 "system(2)" call from the beginning of the bt_enable
 **                 function inside the file 
-**                 mydroid/system/bluetooth/bluedroid/bluetooth.c.
+**                 system/bluetooth/bluedroid/bluetooth.c.
 **
+**                 If the Android system property "ro.bt.bcm_bdaddr_path" is
+**                 set, then the bd_addr will be read from this path.
+**                 This is overridden by --bd_addr on the command line.
 **  
 ******************************************************************************/
 
@@ -70,6 +73,8 @@
 
 #include <string.h>
 #include <signal.h>
+
+#include <cutils/properties.h>
 
 #ifndef N_HCI
 #define N_HCI	15
@@ -105,8 +110,7 @@ unsigned char hci_update_baud_rate[] = { 0x01, 0x18, 0xfc, 0x06, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00 };
 
 unsigned char hci_write_bd_addr[] = { 0x01, 0x01, 0xfc, 0x06, 
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00 };
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 unsigned char hci_write_sleep_mode[] = { 0x01, 0x27, 0xfc, 0x0c, 
 	0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
@@ -208,9 +212,9 @@ parse_bdaddr(char *optarg)
 	int bd_addr[6];
 	int i;
 
-	sscanf(optarg, "%02x%02x%02x%02x%02x%02x", 
-		&bd_addr[0], &bd_addr[1], &bd_addr[2],
-		&bd_addr[3], &bd_addr[4], &bd_addr[5]);
+	sscanf(optarg, "%02X:%02X:%02X:%02X:%02X:%02X",
+		&bd_addr[5], &bd_addr[4], &bd_addr[3],
+		&bd_addr[2], &bd_addr[1], &bd_addr[0]);
 
 	for (i = 0; i < 6; i++) {
 		hci_write_bd_addr[4 + i] = bd_addr[i];
@@ -499,9 +503,46 @@ proc_enable_hci()
 	return;
 }
 
+void
+read_default_bdaddr()
+{
+	int sz;
+	int fd;
+	char path[PROPERTY_VALUE_MAX];
+	char bdaddr[18];
+
+	property_get("ro.bt.bdaddr_path", path, "");
+	if (path[0] == 0)
+		return;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open(%s) failed: %s (%d)", path, strerror(errno),
+				errno);
+		return;
+	}
+
+	sz = read(fd, bdaddr, sizeof(bdaddr));
+	if (sz < 0) {
+		fprintf(stderr, "read(%s) failed: %s (%d)", path, strerror(errno),
+				errno);
+		close(fd);
+		return;
+	} else if (sz != sizeof(bdaddr)) {
+		fprintf(stderr, "read(%s) unexpected size %d", path, sz);
+		close(fd);
+		return;
+	}
+
+	printf("Read default bdaddr of %s\n", bdaddr);
+	parse_bdaddr(bdaddr);
+}
+
 int
 main (int argc, char **argv)
 {
+	read_default_bdaddr();
+
 	parse_cmd_line(argc, argv);
 
 	if (uart_fd < 0) {
