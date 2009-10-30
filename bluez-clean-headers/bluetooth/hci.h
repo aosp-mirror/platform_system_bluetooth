@@ -675,4 +675,8 @@ enum {
 
 	HCI_SECMGR
 };
+struct sockaddr_hci {
+	sa_family_t	hci_family;
+	unsigned short	hci_dev;
+};
 #endif
