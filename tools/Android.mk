@@ -10,7 +10,9 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := bttest.c
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../bluedroid/include
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/../bluedroid/include \
+	system/bluetooth/bluez-clean-headers
 
 LOCAL_SHARED_LIBRARIES := libbluedroid
 

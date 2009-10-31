@@ -19,6 +19,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <bluetooth/bluetooth.h>
 
 /* Enable the bluetooth interface.
  *
@@ -40,6 +41,9 @@ int bt_disable();
 
 /* Returns 1 if enabled, 0 if disabled, and -ve on error */
 int bt_is_enabled();
+
+int ba2str(const bdaddr_t *ba, char *str);
+int str2ba(const char *str, bdaddr_t *ba);
 
 #ifdef __cplusplus
 }

@@ -255,3 +255,17 @@ out:
     if (hci_sock >= 0) close(hci_sock);
     return ret;
 }
+
+int ba2str(const bdaddr_t *ba, char *str) {
+    return sprintf(str, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+                ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
+}
+
+int str2ba(const char *str, bdaddr_t *ba) {
+    int i;
+    for (i = 5; i >= 0; i--) {
+        ba->b[i] = (uint8_t) strtoul(str, &str, 16);
+        str++;
+    }
+    return 0;
+}
