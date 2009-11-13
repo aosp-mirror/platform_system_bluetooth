@@ -15,6 +15,7 @@
 #ifdef __cplusplus
 #endif
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #define HCI_MAX_DEV 16
 #define HCI_MAX_ACL_SIZE 1024
 #define HCI_MAX_SCO_SIZE 255
@@ -674,5 +675,22 @@ enum {
 	HCI_RAW,
 
 	HCI_SECMGR
+};
+struct sockaddr_hci {
+	sa_family_t	hci_family;
+	unsigned short	hci_dev;
+};
+struct hci_conn_info {
+        uint16_t handle;
+        bdaddr_t bdaddr;
+        uint8_t  type;
+        uint8_t  out;
+        uint16_t state;
+        uint32_t link_mode;
+};
+struct hci_conn_list_req {
+        uint16_t dev_id;
+        uint16_t conn_num;
+        struct hci_conn_info conn_info[0];
 };
 #endif

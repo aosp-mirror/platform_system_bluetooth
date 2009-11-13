@@ -21,7 +21,7 @@ dest_dir := $(TARGET_OUT)/etc/bluez
 files := \
 	audio.conf \
 	input.conf \
-	hcid.conf
+	main.conf
 
 copy_to := $(addprefix $(dest_dir)/,$(files))
 
