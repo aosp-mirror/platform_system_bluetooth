@@ -41,8 +41,10 @@
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
+
 static int rfkill_id = -1;
 static char *rfkill_state_path = NULL;
+
 
 static int init_rfkill() {
     char path[64];
@@ -176,9 +178,9 @@ int bt_enable() {
         goto out;
     }
 
-    LOGI("Starting hcid deamon");
-    if (property_set("ctl.start", "hcid") < 0) {
-        LOGE("Failed to start hcid");
+    LOGI("Starting bluetoothd deamon");
+    if (property_set("ctl.start", "bluetoothd") < 0) {
+        LOGE("Failed to start bluetoothd");
         goto out;
     }
     sleep(HCID_START_DELAY_SEC);
@@ -196,9 +198,9 @@ int bt_disable() {
     int ret = -1;
     int hci_sock = -1;
 
-    LOGI("Stopping hcid deamon");
-    if (property_set("ctl.stop", "hcid") < 0) {
-        LOGE("Error stopping hcid");
+    LOGI("Stopping bluetoothd deamon");
+    if (property_set("ctl.stop", "bluetoothd") < 0) {
+        LOGE("Error stopping bluetoothd");
         goto out;
     }
     usleep(HCID_STOP_DELAY_USEC);
@@ -252,4 +254,18 @@ int bt_is_enabled() {
 out:
     if (hci_sock >= 0) close(hci_sock);
     return ret;
+}
+
+int ba2str(const bdaddr_t *ba, char *str) {
+    return sprintf(str, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+                ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
+}
+
+int str2ba(const char *str, bdaddr_t *ba) {
+    int i;
+    for (i = 5; i >= 0; i--) {
+        ba->b[i] = (uint8_t) strtoul(str, &str, 16);
+        str++;
+    }
+    return 0;
 }
