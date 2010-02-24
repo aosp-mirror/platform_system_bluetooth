@@ -26,5 +26,6 @@
 struct sockaddr_sco {
 	sa_family_t	sco_family;
 	bdaddr_t	sco_bdaddr;
+	uint16_t	sco_pkt_type;
 };
 #endif
