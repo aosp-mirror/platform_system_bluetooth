@@ -16,12 +16,13 @@
 LOCAL_PATH := $(my-dir)
 include $(CLEAR_VARS)
 
-dest_dir := $(TARGET_OUT)/etc/bluez
+dest_dir := $(TARGET_OUT)/etc/bluetooth
 
 files := \
 	audio.conf \
 	input.conf \
-	main.conf
+	main.conf \
+	auto_pairing.conf
 
 copy_to := $(addprefix $(dest_dir)/,$(files))
 
