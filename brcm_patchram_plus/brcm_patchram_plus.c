@@ -435,6 +435,8 @@ proc_patchram()
 
 	read(uart_fd, &buffer[0], 2);
 
+	usleep(50000);
+
 	while (read(hcdfile_fd, &buffer[1], 3)) {
 		buffer[0] = 0x01;
 
