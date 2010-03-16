@@ -22,6 +22,7 @@ files := \
 	audio.conf \
 	input.conf \
 	main.conf \
+	blacklist.conf \
 	auto_pairing.conf
 
 copy_to := $(addprefix $(dest_dir)/,$(files))
