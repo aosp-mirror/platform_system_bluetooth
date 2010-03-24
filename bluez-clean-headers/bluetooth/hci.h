@@ -709,4 +709,9 @@ struct hci_conn_list_req {
         uint16_t conn_num;
         struct hci_conn_info conn_info[0];
 };
+typedef struct {
+	uint16_t	opcode;
+	uint8_t		plen;
+} __attribute__ ((packed))	hci_command_hdr;
+#define HCI_COMMAND_HDR_SIZE 	3
 #endif
