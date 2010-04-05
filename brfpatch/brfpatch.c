@@ -127,11 +127,28 @@ static void process_line(FILE *file_out, char *buf, char *buffer) {
                 buf += 4;
                 dp += 2;
                 break;
+            case 6:
+                FAILIF(sscanf(buf, "%06x", (unsigned int *)dp) != 1,
+                       "Error parsing (%d): %s\n", __LINE__, buffer);
+                buf += 6;
+                dp += 3;
+                break;
             case 8:
                 FAILIF(sscanf(buf, "%08x", (unsigned int *)dp) != 1,
                        "Error parsing (%d): %s\n", __LINE__, buffer);
                 buf += 8;
                 dp += 4;
+                break;
+            case 16:
+                dp += 4;
+                FAILIF(sscanf(buf, "%08x", (unsigned int *)dp) != 1,
+                       "Error parsing (%d): %s\n", __LINE__, buffer);
+                buf += 8;
+                dp -= 4;
+                FAILIF(sscanf(buf, "%08x", (unsigned int *)dp) != 1,
+                       "Error parsing (%d): %s\n", __LINE__, buffer);
+                buf += 8;
+                dp += 8;
                 break;
             default:
                 FAILIF(1, "Error parsing (%d): %s\n", __LINE__, buffer);
