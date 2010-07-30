@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include <cutils/log.h>
 #include <cutils/properties.h>
@@ -42,7 +43,7 @@
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
 
-static int rfkill_id = -1;
+static const char *sysrfkill = "/sys/class/rfkill";
 static char *rfkill_state_path = NULL;
 
 
@@ -51,24 +52,37 @@ static int init_rfkill() {
     char buf[16];
     int fd;
     int sz;
-    int id;
-    for (id = 0; ; id++) {
-        snprintf(path, sizeof(path), "/sys/class/rfkill/rfkill%d/type", id);
+    DIR *sysdir;
+    struct dirent *entry;
+
+    if ((sysdir = opendir(sysrfkill)) == NULL) {
+        LOGE("opendir failed: %s (%d)\n", strerror(errno), errno);
+        return -1;
+    }
+
+    while((entry = readdir(sysdir)) != NULL) {
+        if (!(strcmp(".", entry->d_name) && strcmp("..", entry->d_name)))
+            continue;
+        snprintf(path, sizeof(path), "%s/%s/type", sysrfkill, entry->d_name);
         fd = open(path, O_RDONLY);
         if (fd < 0) {
             LOGW("open(%s) failed: %s (%d)\n", path, strerror(errno), errno);
-            return -1;
+            continue;
         }
         sz = read(fd, &buf, sizeof(buf));
         close(fd);
         if (sz >= 9 && memcmp(buf, "bluetooth", 9) == 0) {
-            rfkill_id = id;
-            break;
+            char *sp;
+            if (asprintf(&sp, "%s/%s/state", sysrfkill, entry->d_name) > 0) {
+                LOGI("Found rfkill bluetooth at %s\n", path);
+                rfkill_state_path = sp;
+                break;
+            }
         }
     }
 
-    asprintf(&rfkill_state_path, "/sys/class/rfkill/rfkill%d/state", rfkill_id);
-    return 0;
+    closedir(sysdir);
+    return rfkill_state_path ? 0 : -1;
 }
 
 static int check_bluetooth_power() {
@@ -77,7 +91,7 @@ static int check_bluetooth_power() {
     int ret = -1;
     char buffer;
 
-    if (rfkill_id == -1) {
+    if (rfkill_state_path == NULL) {
         if (init_rfkill()) goto out;
     }
 
@@ -114,7 +128,7 @@ static int set_bluetooth_power(int on) {
     int ret = -1;
     const char buffer = (on ? '1' : '0');
 
-    if (rfkill_id == -1) {
+    if (rfkill_state_path == NULL) {
         if (init_rfkill()) goto out;
     }
 
@@ -221,6 +235,9 @@ int bt_disable() {
     ret = 0;
 
 out:
+    free(rfkill_state_path);
+    rfkill_state_path = NULL;
+
     if (hci_sock >= 0) close(hci_sock);
     return ret;
 }
