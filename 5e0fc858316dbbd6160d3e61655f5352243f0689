@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "AAAA4n////w\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1001002
+      },
+      "writtenOn": "2010-08-09T16:19:09Z",
+      "side": 1,
+      "message": "Use the style from this file\nsysdir \u003d opendir();\nif (!sysdir) {...}",
+      "revId": "5e0fc858316dbbd6160d3e61655f5352243f0689",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAAA4n////s\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1001002
+      },
+      "writtenOn": "2010-08-09T16:19:09Z",
+      "side": 1,
+      "message": "Use style for this file.\nwhile (true) {\n    entry \u003d readdir(sysdir);\n    if (!entry)\n        break;\n    ...",
+      "revId": "5e0fc858316dbbd6160d3e61655f5352243f0689",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAAA4n////o\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1001002
+      },
+      "writtenOn": "2010-08-09T16:19:09Z",
+      "side": 1,
+      "message": "logic is unnecessary complex\nif (!strcmp() || !strcmp())",
+      "revId": "5e0fc858316dbbd6160d3e61655f5352243f0689",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAAA4n////g\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1001002
+      },
+      "writtenOn": "2010-08-09T16:19:09Z",
+      "side": 1,
+      "message": "unnecessary temporary variable",
+      "revId": "5e0fc858316dbbd6160d3e61655f5352243f0689",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAAA4n////c\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1001002
+      },
+      "writtenOn": "2010-08-09T16:19:09Z",
+      "side": 1,
+      "message": "You leak memory here. Instead use statically assigned rfkill_state_path with length 64, and use snprintf here. No need for a temporary variable. Also check for failures within the nest, the success path should not be nested",
+      "revId": "5e0fc858316dbbd6160d3e61655f5352243f0689",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    }
+  ]
+}
