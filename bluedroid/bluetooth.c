@@ -16,6 +16,7 @@
 
 #define LOG_TAG "bluedroid"
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -42,8 +43,8 @@
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
 
-static int rfkill_id = -1;
-static char *rfkill_state_path = NULL;
+static const char *sysrfkill = "/sys/class/rfkill";
+static char rfkill_state_path[64] = "";
 
 
 static int init_rfkill() {
@@ -51,24 +52,35 @@ static int init_rfkill() {
     char buf[16];
     int fd;
     int sz;
-    int id;
-    for (id = 0; ; id++) {
-        snprintf(path, sizeof(path), "/sys/class/rfkill/rfkill%d/type", id);
+    struct dirent *entry;
+    DIR *sysdir = opendir(sysrfkill);
+
+    if (sysdir == NULL) {
+        LOGE("opendir %s failed: %s (%d)\n", sysrfkill, strerror(errno), errno);
+        return -1;
+    }
+
+    while ((entry = readdir(sysdir))) {
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+        snprintf(path, sizeof(path), "%s/%s/type", sysrfkill, entry->d_name);
         fd = open(path, O_RDONLY);
         if (fd < 0) {
             LOGW("open(%s) failed: %s (%d)\n", path, strerror(errno), errno);
-            return -1;
+            continue;
         }
         sz = read(fd, &buf, sizeof(buf));
         close(fd);
         if (sz >= 9 && memcmp(buf, "bluetooth", 9) == 0) {
-            rfkill_id = id;
+            snprintf(rfkill_state_path, sizeof(rfkill_state_path),
+                    "%s/%s/state", sysrfkill, entry->d_name);
             break;
         }
     }
 
-    asprintf(&rfkill_state_path, "/sys/class/rfkill/rfkill%d/state", rfkill_id);
-    return 0;
+    closedir(sysdir);
+    return rfkill_state_path[0] ? 0 : -1;
 }
 
 static int check_bluetooth_power() {
@@ -77,7 +89,7 @@ static int check_bluetooth_power() {
     int ret = -1;
     char buffer;
 
-    if (rfkill_id == -1) {
+    if (rfkill_state_path[0] == '\0') {
         if (init_rfkill()) goto out;
     }
 
@@ -114,7 +126,7 @@ static int set_bluetooth_power(int on) {
     int ret = -1;
     const char buffer = (on ? '1' : '0');
 
-    if (rfkill_id == -1) {
+    if (rfkill_state_path[0] == '\0') {
         if (init_rfkill()) goto out;
     }
 
@@ -220,6 +232,8 @@ int bt_disable() {
     ret = 0;
 
 out:
+    rfkill_state_path[0] = '\0';
+
     if (hci_sock >= 0) close(hci_sock);
     return ret;
 }
