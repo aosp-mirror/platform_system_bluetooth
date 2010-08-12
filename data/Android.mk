@@ -20,6 +20,7 @@ dest_dir := $(TARGET_OUT)/etc/bluetooth
 
 files := \
 	audio.conf \
+	network.conf \
 	input.conf \
 	main.conf \
 	blacklist.conf \
