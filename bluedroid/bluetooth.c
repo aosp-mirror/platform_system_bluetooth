@@ -155,6 +155,9 @@ int bt_enable() {
 
     if (set_bluetooth_power(1) < 0) goto out;
 
+    // Wait for some time so that BT chip stabilizes
+    usleep(200000);  // 200 ms delay
+
     LOGI("Starting hciattach daemon");
     if (property_set("ctl.start", "hciattach") < 0) {
         LOGE("Failed to start hciattach");
