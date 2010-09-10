@@ -489,9 +489,6 @@ proc_enable_hci()
 {
 	int i = N_HCI;
 	int proto = HCI_UART_H4;
-	if (enable_lpm) {
-		proto = HCI_UART_LL;
-	}
 	if (ioctl(uart_fd, TIOCSETD, &i) < 0) {
 		fprintf(stderr, "Can't set line discipline\n");
 		return;
