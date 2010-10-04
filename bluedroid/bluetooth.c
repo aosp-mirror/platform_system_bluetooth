@@ -36,7 +36,6 @@
 #define HCI_DEV_ID 0
 #endif
 
-#define HCID_START_DELAY_SEC   3
 #define HCID_STOP_DELAY_USEC 500000
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
@@ -183,7 +182,6 @@ int bt_enable() {
         LOGE("Failed to start bluetoothd");
         goto out;
     }
-    sleep(HCID_START_DELAY_SEC);
 
     ret = 0;
 
