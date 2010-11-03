@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := brcm_patchram_plus.c
 
 LOCAL_MODULE := brcm_patchram_plus
 
-LOCAL_SHARED_LIBRARIES := libcutils
+LOCAL_SHARED_LIBRARIES := libcutils liblog
 
 include $(BUILD_EXECUTABLE)
 

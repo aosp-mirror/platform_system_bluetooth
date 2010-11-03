@@ -32,6 +32,7 @@
 **						<--bd_addr bd_address>
 **						<--enable_lpm>
 **						<--enable_hci>
+**                                              <--pcm_role master|slave>
 **						uart_device_name
 **
 **                 For example:
@@ -76,6 +77,17 @@
 
 #include <cutils/properties.h>
 
+#ifdef ANDROID
+#define LOG_TAG "brcm_patchram_plus"
+#include <cutils/log.h>
+#undef printf
+#define printf LOGD
+#undef fprintf
+#define fprintf(x, ...) \
+  { if(x==stderr) LOGE(__VA_ARGS__); else fprintf(x, __VA_ARGS__); }
+
+#endif //ANDROID
+
 #ifndef N_HCI
 #define N_HCI	15
 #endif
@@ -97,6 +109,8 @@ int termios_baudrate = 0;
 int bdaddr_flag = 0;
 int enable_lpm = 0;
 int enable_hci = 0;
+int pcm_slave = 0;
+int pcm_master = 0;
 int debug = 0;
 
 struct termios termios;
@@ -115,6 +129,21 @@ unsigned char hci_write_bd_addr[] = { 0x01, 0x01, 0xfc, 0x06,
 unsigned char hci_write_sleep_mode[] = { 0x01, 0x27, 0xfc, 0x0c, 
 	0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00,
 	0x00, 0x00 };
+
+// HCI_COMMAND_PKT = 0x01
+// unpacked ogf/ocf: 0x3F 0x1C
+// ... ((ocf & 0x03ff)|(ogf << 10)) => 0xFC1C (0x1C 0xFC)
+// packet data len: 0x5
+// Data for the Write_SCO_PCM_Int_Param Message:
+// 00 (Use PCM)
+// 0x (02== 512 KHz bit clock, 03==1024 KHz bit clock, 04==2048 KHz)
+// 01 (Long FS)
+// 00 (Slave frame sync)
+// 00 (Slave bit clock)
+unsigned char hci_write_pcm_slave_mode[] =
+	{ 0x01, 0x1C, 0xFC, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00 };
+unsigned char hci_write_pcm_master_mode[] =
+	{ 0x01, 0x1C, 0xFC, 0x05, 0x00, 0x02, 0x00, 0x01, 0x01 };
 
 int
 parse_patchram(char *optarg)
@@ -240,6 +269,22 @@ parse_enable_hci(char *optarg)
 }
 
 int
+parse_pcm_role(char *optarg) {
+	if(!strcmp(optarg, "master")) {
+		pcm_master = 1;
+	} else if (!strcmp(optarg, "slave")) {
+		pcm_slave = 1;
+	} else {
+		printf("Unknown PCM Role received: %s\n", optarg);
+	}
+	if (pcm_master && pcm_slave) {
+		fprintf(stderr, "Illegal command line- pcm role master && slave\n");
+		exit(6);
+	}
+	return(0);
+}
+
+int
 parse_cmd_line(int argc, char **argv)
 {
 	int c;
@@ -248,7 +293,8 @@ parse_cmd_line(int argc, char **argv)
 	typedef int (*PFI)();
 
 	PFI parse_param[] = { parse_patchram, parse_baudrate,
-		parse_bdaddr, parse_enable_lpm, parse_enable_hci };
+		parse_bdaddr, parse_enable_lpm, parse_enable_hci,
+		parse_pcm_role};
 
     while (1)
     {
@@ -261,6 +307,7 @@ parse_cmd_line(int argc, char **argv)
          {"bd_addr", 1, 0, 0},
          {"enable_lpm", 0, 0, 0},
          {"enable_hci", 0, 0, 0},
+         {"pcm_role", 1, 0, 0},
          {0, 0, 0, 0}
        	};
 
@@ -296,8 +343,9 @@ parse_cmd_line(int argc, char **argv)
 			printf("\t<--patchram patchram_file>\n");
 			printf("\t<--baudrate baud_rate>\n");
 			printf("\t<--bd_addr bd_address>\n");
-			printf("\t<--enable_lpm\n");
-			printf("\t<--enable_hci\n");
+			printf("\t<--enable_lpm>\n");
+			printf("\t<--enable_hci>\n");
+			printf("\t<--pcm_role slave|master>\n");
 			printf("\tuart_device_name\n");
            	break;
 
@@ -485,6 +533,20 @@ proc_enable_lpm()
 }
 
 void
+proc_pcm_slave()
+{
+	printf("Configuring PCM Interface as slave.\n");
+	hci_send_cmd(hci_write_pcm_slave_mode, sizeof(hci_write_pcm_slave_mode));
+}
+
+void
+proc_pcm_master()
+{
+	printf("Configuring PCM Interface as master.\n");
+	hci_send_cmd(hci_write_pcm_master_mode, sizeof(hci_write_pcm_master_mode));
+}
+
+void
 proc_enable_hci()
 {
 	int i = N_HCI;
@@ -566,6 +628,12 @@ main (int argc, char **argv)
 
 	if (enable_lpm) {
 		proc_enable_lpm();
+	}
+
+	if (pcm_slave) {
+		proc_pcm_slave();
+	} else if (pcm_master) {
+		proc_pcm_master();
 	}
 
 	if (enable_hci) {
