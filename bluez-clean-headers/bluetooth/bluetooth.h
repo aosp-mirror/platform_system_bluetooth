@@ -23,9 +23,6 @@
 #define AF_BLUETOOTH 31
 #define PF_BLUETOOTH AF_BLUETOOTH
 #endif
-#ifndef SOL_BLUETOOTH
-#define SOL_BLUETOOTH 274
-#endif
 #define BTPROTO_L2CAP 0
 #define BTPROTO_HCI 1
 #define BTPROTO_SCO 2
@@ -38,6 +35,16 @@
 #define SOL_L2CAP 6
 #define SOL_SCO 17
 #define SOL_RFCOMM 18
+#ifndef SOL_BLUETOOTH
+#define SOL_BLUETOOTH 274
+#endif
+#define BT_SECURITY 4
+#define BT_SECURITY_SDP 0
+#define BT_SECURITY_LOW 1
+#define BT_SECURITY_MEDIUM 2
+#define BT_SECURITY_HIGH 3
+#define BT_DEFER_SETUP 7
+#define BT_POWER 8
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define htobs(d) (d)
 #define htobl(d) (d)
@@ -65,4 +72,7 @@ static inline void bacpy(bdaddr_t *dst, const bdaddr_t *src)
 {
 	memcpy(dst, src, sizeof(bdaddr_t));
 }
+struct bt_power {
+	uint8_t force_active;
+};
 #endif
