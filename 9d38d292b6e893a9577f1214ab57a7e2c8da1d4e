@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "AAAA9n//9+Q\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1000660
+      },
+      "writtenOn": "2010-12-01T23:23:45Z",
+      "side": 1,
+      "message": "Style: tab",
+      "revId": "9d38d292b6e893a9577f1214ab57a7e2c8da1d4e",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAAA9n//9+M\u003d",
+        "filename": "bluedroid/bluetooth.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1000660
+      },
+      "writtenOn": "2010-12-01T23:23:45Z",
+      "side": 1,
+      "message": "Style: the rest of the file uses braces for multiline single-statement if",
+      "revId": "9d38d292b6e893a9577f1214ab57a7e2c8da1d4e",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    }
+  ]
+}
