@@ -33,6 +33,7 @@
 **						<--enable_lpm>
 **						<--enable_hci>
 **                                              <--pcm_role master|slave>
+**						<--use_baudrate_for_download>
 **						uart_device_name
 **
 **                 For example:
@@ -111,6 +112,7 @@ int enable_lpm = 0;
 int enable_hci = 0;
 int pcm_slave = 0;
 int pcm_master = 0;
+int use_baudrate_for_download = 0;
 int debug = 0;
 
 struct termios termios;
@@ -262,6 +264,13 @@ parse_enable_lpm(char *optarg)
 }
 
 int
+parse_use_baudrate_for_download(char *optarg)
+{
+	use_baudrate_for_download = 1;
+	return(0);
+}
+
+int
 parse_enable_hci(char *optarg)
 {
 	enable_hci = 1;
@@ -294,7 +303,7 @@ parse_cmd_line(int argc, char **argv)
 
 	PFI parse_param[] = { parse_patchram, parse_baudrate,
 		parse_bdaddr, parse_enable_lpm, parse_enable_hci,
-		parse_pcm_role};
+		parse_pcm_role, parse_use_baudrate_for_download};
 
     while (1)
     {
@@ -308,6 +317,7 @@ parse_cmd_line(int argc, char **argv)
          {"enable_lpm", 0, 0, 0},
          {"enable_hci", 0, 0, 0},
          {"pcm_role", 1, 0, 0},
+	 {"use_baudrate_for_download", 0, 0, 0},
          {0, 0, 0, 0}
        	};
 
@@ -346,6 +356,9 @@ parse_cmd_line(int argc, char **argv)
 			printf("\t<--enable_lpm>\n");
 			printf("\t<--enable_hci>\n");
 			printf("\t<--pcm_role slave|master>\n");
+			printf("\t<--use_baudrate_for_download> - Uses the\
+					baudrate for downloading the\
+					firmware\n");
 			printf("\tuart_device_name\n");
            	break;
 
@@ -614,12 +627,22 @@ main (int argc, char **argv)
 
 	proc_reset();
 
-	if (hcdfile_fd > 0) {
-		proc_patchram();
-	}
+	if (use_baudrate_for_download) {
+		if (termios_baudrate) {
+			proc_baudrate();
+		}
 
-	if (termios_baudrate) {
-		proc_baudrate();
+		if (hcdfile_fd > 0) {
+			proc_patchram();
+		}
+	} else {
+		if (hcdfile_fd > 0) {
+			proc_patchram();
+		}
+
+		if (termios_baudrate) {
+			proc_baudrate();
+		}
 	}
 
 	if (bdaddr_flag) {
