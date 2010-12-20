@@ -305,77 +305,70 @@ parse_cmd_line(int argc, char **argv)
 		parse_bdaddr, parse_enable_lpm, parse_enable_hci,
 		parse_pcm_role, parse_use_baudrate_for_download};
 
-    while (1)
-    {
-    	int this_option_optind = optind ? optind : 1;
-        int option_index = 0;
+   	while (1)
+    	{
+		int this_option_optind = optind ? optind : 1;
+		int option_index = 0;
 
-       	static struct option long_options[] = {
-         {"patchram", 1, 0, 0},
-         {"baudrate", 1, 0, 0},
-         {"bd_addr", 1, 0, 0},
-         {"enable_lpm", 0, 0, 0},
-         {"enable_hci", 0, 0, 0},
-         {"pcm_role", 1, 0, 0},
-	 {"use_baudrate_for_download", 0, 0, 0},
-         {0, 0, 0, 0}
-       	};
+		static struct option long_options[] = {
+			{"patchram", 1, 0, 0},
+			{"baudrate", 1, 0, 0},
+			{"bd_addr", 1, 0, 0},
+			{"enable_lpm", 0, 0, 0},
+			{"enable_hci", 0, 0, 0},
+			{"pcm_role", 1, 0, 0},
+			{"use_baudrate_for_download", 0, 0, 0},
+			{0, 0, 0, 0}
+		};
 
-       	c = getopt_long_only (argc, argv, "d", long_options, &option_index);
+		c = getopt_long_only (argc, argv, "d", long_options,
+				&option_index);
 
-       	if (c == -1) {
-      		break;
+		if (c == -1) {
+			break;
 		}
 
-       	switch (c) {
-        case 0:
-        	printf ("option %s", long_options[option_index].name);
+		switch (c) {
+			case 0:
+				if (debug) {
+					printf ("option %s",
+						long_options[option_index].name);
+					if (optarg)
+						printf (" with arg %s", optarg);
+					printf ("\n");
+				}
+				(*parse_param[option_index])(optarg);
+				break;
+			case 'd':
+				debug = 1;
+				break;
 
-        	if (optarg) {
-           		printf (" with arg %s", optarg);
-			}
-
-           	printf ("\n");
-
-			(*parse_param[option_index])(optarg);
-		break;
-
-		case 'd':
-			debug = 1;
-		break;
-
-        case '?':
-			//nobreak
-        default:
-
-			printf("Usage %s:\n", argv[0]);
-			printf("\t<-d> to print a debug log\n");
-			printf("\t<--patchram patchram_file>\n");
-			printf("\t<--baudrate baud_rate>\n");
-			printf("\t<--bd_addr bd_address>\n");
-			printf("\t<--enable_lpm>\n");
-			printf("\t<--enable_hci>\n");
-			printf("\t<--pcm_role slave|master>\n");
-			printf("\t<--use_baudrate_for_download> - Uses the\
-					baudrate for downloading the\
-					firmware\n");
-			printf("\tuart_device_name\n");
-           	break;
-
-        }
+			case '?':
+				//nobreak
+			default:
+				printf("Usage %s:\n", argv[0]);
+				printf("\t<-d> to print a debug log\n");
+				printf("\t<--patchram patchram_file>\n");
+				printf("\t<--baudrate baud_rate>\n");
+				printf("\t<--bd_addr bd_address>\n");
+				printf("\t<--enable_lpm>\n");
+				printf("\t<--enable_hci>\n");
+				printf("\t<--pcm_role slave|master>\n");
+				printf("\t<--use_baudrate_for_download> - Uses the\
+						baudrate for downloading the\
+						firmware\n");
+				printf("\tuart_device_name\n");
+				break;
+		}
 	}
-
-   	if (optind < argc) {
-       	if (optind < argc) {
-       		printf ("%s ", argv[optind]);
-
-			if ((uart_fd = open(argv[optind], O_RDWR | O_NOCTTY)) == -1) {
-				fprintf(stderr, "port %s could not be opened, error %d\n", argv[2], errno);
-			}
+	if (optind < argc) {
+		if (debug)
+			printf ("%s \n", argv[optind]);
+		if ((uart_fd = open(argv[optind], O_RDWR | O_NOCTTY)) == -1) {
+			fprintf(stderr, "port %s could not be opened, error %d\n",
+					argv[2], errno);
 		}
-
-       	printf ("\n");
-    }
+	}
 
 	return(0);
 }
@@ -548,14 +541,16 @@ proc_enable_lpm()
 void
 proc_pcm_slave()
 {
-	printf("Configuring PCM Interface as slave.\n");
+	if (debug)
+		printf("Configuring PCM Interface as slave.\n");
 	hci_send_cmd(hci_write_pcm_slave_mode, sizeof(hci_write_pcm_slave_mode));
 }
 
 void
 proc_pcm_master()
 {
-	printf("Configuring PCM Interface as master.\n");
+	if (debug)
+		printf("Configuring PCM Interface as master.\n");
 	hci_send_cmd(hci_write_pcm_master_mode, sizeof(hci_write_pcm_master_mode));
 }
 
@@ -584,6 +579,8 @@ read_default_bdaddr()
 	int fd;
 	char path[PROPERTY_VALUE_MAX];
 	char bdaddr[18];
+	int len = 17;
+	memset(bdaddr, 0, (len + 1) * sizeof(char));
 
 	property_get("ro.bt.bdaddr_path", path, "");
 	if (path[0] == 0)
@@ -596,19 +593,20 @@ read_default_bdaddr()
 		return;
 	}
 
-	sz = read(fd, bdaddr, sizeof(bdaddr));
+	sz = read(fd, bdaddr, len);
 	if (sz < 0) {
 		fprintf(stderr, "read(%s) failed: %s (%d)", path, strerror(errno),
 				errno);
 		close(fd);
 		return;
-	} else if (sz != sizeof(bdaddr)) {
+	} else if (sz != len) {
 		fprintf(stderr, "read(%s) unexpected size %d", path, sz);
 		close(fd);
 		return;
 	}
 
-	printf("Read default bdaddr of %s\n", bdaddr);
+	if (debug)
+		printf("Read default bdaddr of %s\n", bdaddr);
 	parse_bdaddr(bdaddr);
 }
 
