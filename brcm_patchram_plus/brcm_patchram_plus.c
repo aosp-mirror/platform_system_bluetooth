@@ -514,8 +514,6 @@ read_event(int fd, uchar *buffer)
 		}
 	} while (buffer[0] == 0);
 
-	
-
 	i += count;
 	len = buffer[2];
 
