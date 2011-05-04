@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "AAAA/3//+0Y\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 517,
+      "author": {
+        "id": 1002471
+      },
+      "writtenOn": "2011-05-04T19:24:26Z",
+      "side": 1,
+      "message": "IMHO, trailing whitespace should be eliminated.",
+      "revId": "9cf264c2e2271d93a0ceb1f7017a0535c78fdf9c",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    }
+  ]
+}
