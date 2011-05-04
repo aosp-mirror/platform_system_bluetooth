@@ -1,20 +1,22 @@
-/**
- * brcm_patchram_plus.c
+/*******************************************************************************
  *
- * Copyright (C) 2009 Broadcom Corporation.
- * 
- * This software is licensed under the terms of the GNU General Public License,
- * version 2, as published by the Free Software Foundation (the "GPL"), and may
- * be copied, distributed, and modified under those terms.
+ *  Copyright (C) 2009-2011 Broadcom Corporation
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GPL for more details.
- * 
- * A copy of the GPL is available at http://www.broadcom.com/licenses/GPLv2.php
- * or by writing to the Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+
 
 
 /*****************************************************************************
@@ -36,7 +38,7 @@
 **						<--scopcm=sco_routing,pcm_interface_rate,frame_type,
 **							sync_mode,clock_mode,lsb_first,fill_bits,
 **							fill_method,fill_num,right_justify>
-**					    <--i2s=i2s_enable,is_master,sample_rate,clock_rate>
+**							i2s=i2s_enable,is_master,sample_rate,clock_rate
 **						<--no2bytes skips waiting for two byte confirmation
 **							before starting patchram download. Newer chips
 **                          do not generate these two bytes.>
@@ -295,7 +297,7 @@ parse_scopcm(char *optarg)
 		&param[5], &param[6], &param[7], &param[8], &param[9]);
 
 	if (ret != 10) {
-		return(0);
+		return;
 	}
 
 	scopcm = 1;
@@ -307,8 +309,6 @@ parse_scopcm(char *optarg)
 	for (i = 0; i < 5; i++) {
 		hci_write_pcm_data_format[4 + i] = param[5 + i];
 	}
-
-	return(0);
 }
 
 int
@@ -322,7 +322,7 @@ parse_i2s(char *optarg)
 		&param[3]);
 
 	if (ret != 4) {
-		return(0);
+		return;
 	}
 
 	i2s = 1;
@@ -330,8 +330,6 @@ parse_i2s(char *optarg)
 	for (i = 0; i < 4; i++) {
 		hci_write_i2spcm_interface_param[4 + i] = param[i];
 	}
-
-	return(0);
 }
 
 int
@@ -368,10 +366,6 @@ usage(char *argv0)
 	printf("\t<--scopcm=sco_routing,pcm_interface_rate,frame_type,\n");
 	printf("\t\tsync_mode,clock_mode,lsb_first,fill_bits\n");
 	printf("\t<--tosleep=microseconds>\n");
-	printf("\t<--i2s=i2s_enable,is_master,sample_rate,clock_rate>\n");
-	printf("\t<--no2bytes skips waiting for two byte confirmation\n");
-	printf("\t\tbefore starting patchram download. Newer chips\n");
-	printf("\t\tdo not generate these two bytes.>\n");
 	printf("\tuart_device_name\n");
 }
 
@@ -510,10 +504,17 @@ read_event(int fd, uchar *buffer)
 	int len = 3;
 	int count;
 
-	while ((count = read(fd, &buffer[i], len)) < len) {
-		i += count;
-		len -= count;
-	}
+	do {
+		i = 0;
+		len = 3;
+
+		while ((count = read(fd, &buffer[i], len)) < len) {
+			i += count;
+			len -= count;
+		}
+	} while (buffer[0] == 0);
+
+	
 
 	i += count;
 	len = buffer[2];
@@ -591,6 +592,12 @@ proc_patchram()
 		hci_send_cmd(buffer, len + 4);
 
 		read_event(uart_fd, buffer);
+	}
+
+	if (use_baudrate_for_download) {
+		cfsetospeed(&termios, B115200);
+		cfsetispeed(&termios, B115200);
+		tcsetattr(uart_fd, TCSANOW, &termios);
 	}
 
 	proc_reset();
@@ -737,18 +744,14 @@ main (int argc, char **argv)
 		if (termios_baudrate) {
 			proc_baudrate();
 		}
+	}
 
-		if (hcdfile_fd > 0) {
-			proc_patchram();
-		}
-	} else {
-		if (hcdfile_fd > 0) {
-			proc_patchram();
-		}
+	if (hcdfile_fd > 0) {
+		proc_patchram();
+	}
 
-		if (termios_baudrate) {
-			proc_baudrate();
-		}
+	if (termios_baudrate) {
+		proc_baudrate();
 	}
 
 	if (bdaddr_flag) {
