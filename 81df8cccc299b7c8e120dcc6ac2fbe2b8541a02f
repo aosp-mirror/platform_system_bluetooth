@@ -1,0 +1,8 @@
+Change-Id: I81df8cccc299b7c8e120dcc6ac2fbe2b8541a02f
+Code-Review+2: Jean-Baptiste Queru <jbq@google.com>
+Verified+1: Jean-Baptiste Queru <jbq@google.com>
+Submitted-by: Jean-Baptiste Queru <jbq@google.com>
+Submitted-at: Wed, 18 Mar 2009 14:01:20 -0700
+Reviewed-on: https://review.source.android.com/9207
+Project: platform/system/bluetooth
+Branch: refs/heads/master
