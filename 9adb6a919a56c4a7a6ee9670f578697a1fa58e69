@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "AAABDX//+vs\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "if is_master is 0, i2s will be in slave mode. i2s_enable\nset to 1 will enable i2s output which can be used for\ndigital stereo output of FM or from other input source.\npcm_role is no longer needed since scopcm handles\nall sco config parameters including role.",
+      "parentUuid": "AAABDX//+yk\u003d",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "AAABDX//+7I\u003d",
         "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2011-06-23T05:15:13Z",
       "side": 1,
       "message": "missing integer return value",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAABDX//+vo\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "should be return(1);",
+      "parentUuid": "AAABDX//+7I\u003d",
       "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "AAABDX//+vk\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "should be return(1);",
+      "parentUuid": "AAABDX//+7E\u003d",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "AAABDX//+7U\u003d",
         "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
         "patchSetId": 1
@@ -64,6 +118,24 @@
       "writtenOn": "2011-06-23T03:31:25Z",
       "side": 1,
       "message": "Can you give me an example as to when these various modes of scopcm will be needed ?",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAABDX//+u8\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 364,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "One of our firmware engineers will paste\nthe details of this command from our\nprogrammer\u0027s guide.",
+      "parentUuid": "AAABDX//+7U\u003d",
       "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
       "unresolved": false
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "AAABDX//+vI\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "the 4330 would require no2bytes set to 1.\ntosleep would only be required if a chip\nneeds time to prepare for the first patchram\npacket. This is not required for the 4330\nbut maybe needed for other current or future\nchips.",
+      "parentUuid": "AAABDX///C4\u003d",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "AAABDX///DU\u003d",
         "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
         "patchSetId": 1
@@ -104,6 +194,24 @@
     },
     {
       "key": {
+        "uuid": "AAABDX//+vE\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 516,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "This was not in the original code submitted.\nI think it was an attempt to handle the new 4330\npatchram scheme. It should be removed.",
+      "parentUuid": "AAABDX///DU\u003d",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "AAABDX//+7Y\u003d",
         "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
         "patchSetId": 1
@@ -115,6 +223,24 @@
       "writtenOn": "2011-06-23T03:31:25Z",
       "side": 1,
       "message": "Is it fine if proc_baudrate gets called twice ?",
+      "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "AAABDX//+vA\u003d",
+        "filename": "brcm_patchram_plus/brcm_patchram_plus.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 753,
+      "author": {
+        "id": 1005512
+      },
+      "writtenOn": "2011-06-24T18:57:02Z",
+      "side": 1,
+      "message": "The baud rate coming out of a patchram\ndownload is usually set at 115200.\nIf we speed up the baudrate for patchram\ndownload, the higher baud rate will need\nto be set again afterwards.",
+      "parentUuid": "AAABDX//+7Y\u003d",
       "revId": "9adb6a919a56c4a7a6ee9670f578697a1fa58e69",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
       "unresolved": false
