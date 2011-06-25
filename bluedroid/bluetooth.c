@@ -167,14 +167,16 @@ int bt_enable() {
         hci_sock = create_hci_sock();
         if (hci_sock < 0) goto out;
 
-        if (!ioctl(hci_sock, HCIDEVUP, HCI_DEV_ID)) {
+        ret = ioctl(hci_sock, HCIDEVUP, HCI_DEV_ID);
+        if (!ret) {
             break;
         }
         close(hci_sock);
         usleep(10000);  // 10 ms retry delay
     }
     if (attempt == 0) {
-        LOGE("%s: Timeout waiting for HCI device to come up", __FUNCTION__);
+        LOGE("%s: Timeout waiting for HCI device to come up, error- %d, ",
+            __FUNCTION__, ret);
         set_bluetooth_power(0);
         goto out;
     }
