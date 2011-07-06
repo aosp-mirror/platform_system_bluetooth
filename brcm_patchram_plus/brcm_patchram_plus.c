@@ -655,6 +655,11 @@ proc_patchram()
 		read_event(uart_fd, buffer);
 	}
 
+	if (use_baudrate_for_download) {
+		cfsetospeed(&termios, B115200);
+		cfsetispeed(&termios, B115200);
+		tcsetattr(uart_fd, TCSANOW, &termios);
+	}
 	proc_reset();
 }
 
