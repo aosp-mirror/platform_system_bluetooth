@@ -177,6 +177,9 @@ int bt_enable() {
     if (attempt == 0) {
         LOGE("%s: Timeout waiting for HCI device to come up, error- %d, ",
             __FUNCTION__, ret);
+        if (property_set("ctl.stop", "hciattach") < 0) {
+            LOGE("Error stopping hciattach");
+        }
         set_bluetooth_power(0);
         goto out;
     }
