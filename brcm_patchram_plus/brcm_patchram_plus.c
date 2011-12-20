@@ -130,7 +130,7 @@
 #define LOG_TAG "brcm_patchram_plus"
 #include <cutils/log.h>
 #undef printf
-#define printf LOGD
+#define printf ALOGD
 #undef fprintf
 #define fprintf(x, ...) \
   { if(x==stderr) LOGE(__VA_ARGS__); else fprintf(x, __VA_ARGS__); }
