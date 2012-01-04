@@ -154,7 +154,7 @@ int bt_enable() {
 
     if (set_bluetooth_power(1) < 0) goto out;
 
-    LOGI("Starting hciattach daemon");
+    ALOGI("Starting hciattach daemon");
     if (property_set("ctl.start", "hciattach") < 0) {
         LOGE("Failed to start hciattach");
         set_bluetooth_power(0);
@@ -169,7 +169,7 @@ int bt_enable() {
 
         ret = ioctl(hci_sock, HCIDEVUP, HCI_DEV_ID);
 
-        LOGI("bt_enable: ret: %d, errno: %d", ret, errno);
+        ALOGI("bt_enable: ret: %d, errno: %d", ret, errno);
         if (!ret) {
             break;
         } else if (errno == EALREADY) {
@@ -190,7 +190,7 @@ int bt_enable() {
         goto out;
     }
 
-    LOGI("Starting bluetoothd deamon");
+    ALOGI("Starting bluetoothd deamon");
     if (property_set("ctl.start", "bluetoothd") < 0) {
         LOGE("Failed to start bluetoothd");
         set_bluetooth_power(0);
@@ -210,7 +210,7 @@ int bt_disable() {
     int ret = -1;
     int hci_sock = -1;
 
-    LOGI("Stopping bluetoothd deamon");
+    ALOGI("Stopping bluetoothd deamon");
     if (property_set("ctl.stop", "bluetoothd") < 0) {
         LOGE("Error stopping bluetoothd");
         goto out;
@@ -221,7 +221,7 @@ int bt_disable() {
     if (hci_sock < 0) goto out;
     ioctl(hci_sock, HCIDEVDOWN, HCI_DEV_ID);
 
-    LOGI("Stopping hciattach deamon");
+    ALOGI("Stopping hciattach deamon");
     if (property_set("ctl.stop", "hciattach") < 0) {
         LOGE("Error stopping hciattach");
         goto out;
