@@ -55,7 +55,7 @@ static int init_rfkill() {
         snprintf(path, sizeof(path), "/sys/class/rfkill/rfkill%d/type", id);
         fd = open(path, O_RDONLY);
         if (fd < 0) {
-            LOGW("open(%s) failed: %s (%d)\n", path, strerror(errno), errno);
+            ALOGW("open(%s) failed: %s (%d)\n", path, strerror(errno), errno);
             return -1;
         }
         sz = read(fd, &buf, sizeof(buf));
@@ -173,7 +173,7 @@ int bt_enable() {
         if (!ret) {
             break;
         } else if (errno == EALREADY) {
-            LOGW("Bluetoothd already started, unexpectedly!");
+            ALOGW("Bluetoothd already started, unexpectedly!");
             break;
         }
 
