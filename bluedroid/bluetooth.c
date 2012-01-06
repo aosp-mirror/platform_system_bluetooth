@@ -82,13 +82,13 @@ static int check_bluetooth_power() {
 
     fd = open(rfkill_state_path, O_RDONLY);
     if (fd < 0) {
-        LOGE("open(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
+        ALOGE("open(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
              errno);
         goto out;
     }
     sz = read(fd, &buffer, 1);
     if (sz != 1) {
-        LOGE("read(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
+        ALOGE("read(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
              errno);
         goto out;
     }
@@ -119,13 +119,13 @@ static int set_bluetooth_power(int on) {
 
     fd = open(rfkill_state_path, O_WRONLY);
     if (fd < 0) {
-        LOGE("open(%s) for write failed: %s (%d)", rfkill_state_path,
+        ALOGE("open(%s) for write failed: %s (%d)", rfkill_state_path,
              strerror(errno), errno);
         goto out;
     }
     sz = write(fd, &buffer, 1);
     if (sz < 0) {
-        LOGE("write(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
+        ALOGE("write(%s) failed: %s (%d)", rfkill_state_path, strerror(errno),
              errno);
         goto out;
     }
@@ -139,7 +139,7 @@ out:
 static inline int create_hci_sock() {
     int sk = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
     if (sk < 0) {
-        LOGE("Failed to create bluetooth hci socket: %s (%d)",
+        ALOGE("Failed to create bluetooth hci socket: %s (%d)",
              strerror(errno), errno);
     }
     return sk;
@@ -156,7 +156,7 @@ int bt_enable() {
 
     ALOGI("Starting hciattach daemon");
     if (property_set("ctl.start", "hciattach") < 0) {
-        LOGE("Failed to start hciattach");
+        ALOGE("Failed to start hciattach");
         set_bluetooth_power(0);
         goto out;
     }
@@ -181,10 +181,10 @@ int bt_enable() {
         usleep(100000);  // 100 ms retry delay
     }
     if (attempt == 0) {
-        LOGE("%s: Timeout waiting for HCI device to come up, error- %d, ",
+        ALOGE("%s: Timeout waiting for HCI device to come up, error- %d, ",
             __FUNCTION__, ret);
         if (property_set("ctl.stop", "hciattach") < 0) {
-            LOGE("Error stopping hciattach");
+            ALOGE("Error stopping hciattach");
         }
         set_bluetooth_power(0);
         goto out;
@@ -192,7 +192,7 @@ int bt_enable() {
 
     ALOGI("Starting bluetoothd deamon");
     if (property_set("ctl.start", "bluetoothd") < 0) {
-        LOGE("Failed to start bluetoothd");
+        ALOGE("Failed to start bluetoothd");
         set_bluetooth_power(0);
         goto out;
     }
@@ -212,7 +212,7 @@ int bt_disable() {
 
     ALOGI("Stopping bluetoothd deamon");
     if (property_set("ctl.stop", "bluetoothd") < 0) {
-        LOGE("Error stopping bluetoothd");
+        ALOGE("Error stopping bluetoothd");
         goto out;
     }
     usleep(HCID_STOP_DELAY_USEC);
@@ -223,7 +223,7 @@ int bt_disable() {
 
     ALOGI("Stopping hciattach deamon");
     if (property_set("ctl.stop", "hciattach") < 0) {
-        LOGE("Error stopping hciattach");
+        ALOGE("Error stopping hciattach");
         goto out;
     }
 
