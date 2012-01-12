@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -280,7 +281,7 @@ int ba2str(const bdaddr_t *ba, char *str) {
 int str2ba(const char *str, bdaddr_t *ba) {
     int i;
     for (i = 5; i >= 0; i--) {
-        ba->b[i] = (uint8_t) strtoul(str, &str, 16);
+        ba->b[i] = (uint8_t) strtoul(str, (char **) &str, 16);
         str++;
     }
     return 0;
