@@ -45,7 +45,7 @@
 static int rfkill_id = -1;
 static char *rfkill_state_path = NULL;
 
-
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
 static int init_rfkill() {
     char path[64];
     char buf[16];
@@ -136,6 +136,7 @@ out:
     if (fd >= 0) close(fd);
     return ret;
 }
+#endif
 
 static inline int create_hci_sock() {
     int sk = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
@@ -153,12 +154,22 @@ int bt_enable() {
     int hci_sock = -1;
     int attempt;
 
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
     if (set_bluetooth_power(1) < 0) goto out;
+#endif
 
+#ifndef BLUETOOTH_HCIATTACH_USING_PROPERTY
     ALOGI("Starting hciattach daemon");
-    if (property_set("ctl.start", "hciattach") < 0) {
+    if (property_set("ctl.start", "hciattach") < 0)
+#else
+    ALOGI("Enable hci tranport");
+    if (property_set("bluetooth.hciattach", "true") < 0)
+#endif
+    {
         ALOGE("Failed to start hciattach");
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
         set_bluetooth_power(0);
+#endif
         goto out;
     }
 
@@ -189,14 +200,18 @@ int bt_enable() {
         if (property_set("ctl.stop", "hciattach") < 0) {
             ALOGE("Error stopping hciattach");
         }
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
         set_bluetooth_power(0);
+#endif
         goto out;
     }
 
     ALOGI("Starting bluetoothd deamon");
     if (property_set("ctl.start", "bluetoothd") < 0) {
         ALOGE("Failed to start bluetoothd");
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
         set_bluetooth_power(0);
+#endif
         goto out;
     }
 
@@ -224,15 +239,23 @@ int bt_disable() {
     if (hci_sock < 0) goto out;
     ioctl(hci_sock, HCIDEVDOWN, HCI_DEV_ID);
 
+#ifndef BLUETOOTH_HCIATTACH_USING_PROPERTY
     ALOGI("Stopping hciattach deamon");
-    if (property_set("ctl.stop", "hciattach") < 0) {
+    if (property_set("ctl.stop", "hciattach") < 0)
+#else
+    ALOGI("Disable hci tranport");
+    if (property_set("bluetooth.hciattach", "false") < 0)
+#endif
+    {
         ALOGE("Error stopping hciattach");
         goto out;
     }
 
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
     if (set_bluetooth_power(0) < 0) {
         goto out;
     }
+#endif
     ret = 0;
 
 out:
@@ -248,9 +271,11 @@ int bt_is_enabled() {
     struct hci_dev_info dev_info;
 
 
+#ifndef BLUETOOTH_DOES_NOT_USE_RFKILL
     // Check power first
     ret = check_bluetooth_power();
     if (ret == -1 || ret == 0) goto out;
+#endif
 
     ret = -1;
 
